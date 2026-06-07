@@ -84,12 +84,52 @@ jobs:
           fi
           echo "SHA256 verified: $ACTUAL"
 
-      - name: Upload to release
+      - name: Check file size
+        id: size
+        run: |
+          SIZE=$(stat -f%z "${{ matrix.model }}.pt")
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          if [ "$SIZE" -gt 2147483648 ]; then
+            echo "split=true" >> $GITHUB_OUTPUT
+            echo "File exceeds 2GB limit, will split into chunks"
+          else
+            echo "split=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Split large file
+        if: steps.size.outputs.split == 'true'
+        run: |
+          split -b 1900M "${{ matrix.model }}.pt" "${{ matrix.model }}.pt.part-"
+          echo "Split into $(ls ${{ matrix.model }}.pt.part-* | wc -l) parts"
+          ls -lh ${{ matrix.model }}.pt.part-*
+          sha256sum "${{ matrix.model }}.pt" > "${{ matrix.model }}.pt.sha256"
+
+      - name: Upload chunks (large files)
+        if: steps.size.outputs.split == 'true'
+        run: |
+          for f in "${{ matrix.model }}.pt.part-"* "${{ matrix.model }}.pt.sha256"; do
+            echo "Uploading $f..."
+            gh release upload latest "$f" --repo "${{ github.repository }}" --clobber
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload directly (small files)
+        if: steps.size.outputs.split != 'true'
         run: |
           gh release upload latest "${{ matrix.model }}.pt" \
             --repo "${{ github.repository }}" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print download info
+        run: |
+          if [ "${{ steps.size.outputs.split }}" = "true" ]; then
+            echo "Model ${{ matrix.model }} uploaded as split parts"
+            echo "Rejoin with: bash scripts/join.sh ${{ matrix.model }}"
+          else
+            echo "Model ${{ matrix.model }} uploaded directly"
+          fi
 
   summary:
     needs: download
@@ -104,5 +144,9 @@ jobs:
           echo "=========================================="
           echo ""
           echo "Usage:"
-          echo "  curl -L -o ~/.cache/whisper/<model>.pt \\"
-          echo "    https://github.com/${{ github.repository }}/releases/download/latest/<model>.pt"
+          echo "  # Small models (< 2GB):"
+          echo "  curl -L -o ~/.cache/whisper/tiny.pt \\"
+          echo "    https://github.com/${{ github.repository }}/releases/download/latest/tiny.pt"
+          echo ""
+          echo "  # Large models (split into parts):"
+          echo "  bash scripts/join.sh large-v3"

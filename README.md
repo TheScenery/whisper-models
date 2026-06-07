@@ -7,16 +7,28 @@
 从 [Releases](https://github.com/你的用户名/whisper-models/releases/tag/latest) 页面下载所需的 `.pt` 文件，
 放入 Whisper 缓存目录:
 
+### 小模型（< 2GB）
+
+可直接下载:
+
 ```bash
 # macOS / Linux
 curl -L -o ~/.cache/whisper/tiny.pt \
   https://github.com/你的用户名/whisper-models/releases/download/latest/tiny.pt
 
-# 或者下载所有模型
-for model in tiny.en tiny base.en base small.en small medium.en medium large-v1 large-v2 large-v3 large-v3-turbo; do
+# 批量下载小模型
+for model in tiny.en tiny base.en base small.en small medium.en medium; do
   curl -L -o ~/.cache/whisper/${model}.pt \
     https://github.com/你的用户名/whisper-models/releases/download/latest/${model}.pt
 done
+```
+
+### 大模型（>= 2GB）
+
+因 GitHub Releases 单文件限制 2GB，large 系列模型已分割上传，使用 `scripts/join.sh` 自动下载、重组并校验:
+
+```bash
+bash scripts/join.sh large-v3
 ```
 
 ## 使用
