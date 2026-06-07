@@ -15,8 +15,10 @@ jobs:
     steps:
       - name: Ensure release exists
         run: |
-          gh release view latest --json tagUrl > /dev/null 2>&1 || \
+          REPO="${{ github.repository }}"
+          gh release view latest --repo "$REPO" > /dev/null 2>&1 || \
             gh release create latest \
+              --repo "$REPO" \
               --title "Whisper Models" \
               --notes "Pre-downloaded OpenAI Whisper model files for reliable access.\n\nUpdated on $(date -u '+%Y-%m-%d').\n\nUse these files with \`whisper --model <name>\` by placing them in \`~/.cache/whisper/\`."
         env:
@@ -81,7 +83,8 @@ jobs:
 
       - name: Upload to release
         run: |
-          gh release upload latest "${{ matrix.model }}.pt" --clobber
+          gh release upload latest "${{ matrix.model }}.pt" \
+            --repo "${{ github.repository }}" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
