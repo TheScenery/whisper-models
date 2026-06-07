@@ -53,18 +53,10 @@ jobs:
       - name: Install dependencies
         run: pip install huggingface-hub
       - name: Upload model card
-        run: |
-          python -c "
-from huggingface_hub import HfApi
-api = HfApi(token='${{ secrets.HF_TOKEN }}')
-api.upload_file(
-    path_or_fileobj='README.md',
-    path_in_repo='README.md',
-    repo_id='${{ env.HF_REPO_ID }}',
-    token='${{ secrets.HF_TOKEN }}',
-)
-print('Model card uploaded')
-"
+        run: python scripts/upload_readme.py
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ env.HF_REPO_ID }}
       - name: Print result
         run: |
           echo ""
