@@ -40,6 +40,12 @@ def main():
     print(f"[{model_name}] Fetching model info from openai/whisper...")
     url, expected_sha256, filename = get_model_url(model_name)
 
+    api = HfApi(token=token)
+
+    if api.file_exists(repo_id=repo_id, path_in_repo=filename, repo_type="model"):
+        print(f"[{model_name}] Already exists on HF Hub, skipping")
+        return
+
     print(f"[{model_name}] Downloading from OpenAI...")
     urllib.request.urlretrieve(url, filename)
 
@@ -50,8 +56,6 @@ def main():
         print(f"SHA256 mismatch!\n  Expected: {expected_sha256}\n  Actual:   {actual}")
         sys.exit(1)
     print(f"[{model_name}] SHA256 verified: {actual}")
-
-    api = HfApi(token=token)
 
     print(f"[{model_name}] Uploading to Hugging Face Hub ({repo_id})...")
     api.upload_file(
