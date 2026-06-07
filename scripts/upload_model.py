@@ -3,7 +3,7 @@ import sys
 import hashlib
 import urllib.request
 
-from huggingface_hub import HfApi, create_repo
+from huggingface_hub import HfApi
 
 MODEL_URLS = {
     "tiny.en":        ("d3dd57d32accea0b295c96e26691aa14d8822fac7d9d27d5dc00b4ca2826dd03", "tiny.en.pt"),
@@ -45,8 +45,6 @@ def main():
     print(f"[{model_name}] SHA256 verified: {actual}")
 
     api = HfApi(token=token)
-
-    create_repo(repo_id, repo_type="model", exist_ok=True, token=token)
 
     print(f"[{model_name}] Uploading to Hugging Face Hub ({repo_id})...")
     api.upload_file(
