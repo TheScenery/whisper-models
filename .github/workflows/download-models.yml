@@ -9,53 +9,7 @@ env:
   HF_REPO_ID: TheScenery/whisper-models
 
 jobs:
-  create-repo:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install dependencies
-        run: pip install huggingface-hub
-      - name: Create HF repo if not exists
-        run: |
-          python -c "
-from huggingface_hub import HfApi
-api = HfApi(token='${{ secrets.HF_TOKEN }}')
-api.create_repo('${{ env.HF_REPO_ID }}', repo_type='model', exist_ok=True)
-print('Repo ready')
-"
-      - name: Add HF repo card
-        run: |
-          python -c "
-from huggingface_hub import HfApi
-api = HfApi(token='${{ secrets.HF_TOKEN }}')
-content = '''---
-license: mit
-library_name: whisper
----
-
-# Whisper Models
-
-Pre-downloaded OpenAI Whisper model files. Auto-updated via GitHub Actions.
-
-## Usage
-
-\`\`\`bash
-huggingface-cli download TheScenery/whisper-models tiny.pt --local-dir ~/.cache/whisper/
-\`\`\`
-'''
-api.upload_file(
-  path_or_fileobj=content.encode(),
-  path_in_repo='README.md',
-  repo_id='${{ env.HF_REPO_ID }}',
-  token='${{ secrets.HF_TOKEN }}',
-)
-print('README.md uploaded')
-"
-
   upload:
-    needs: create-repo
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
