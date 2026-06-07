@@ -1,47 +1,51 @@
 # Whisper Models
 
-自动下载 OpenAI Whisper 模型文件并通过 GitHub Releases 分发，解决 `whisper` 命令行运行时因网络原因下载模型失败的问题。
+通过 GitHub Actions 自动下载 OpenAI Whisper 模型文件并上传到 Hugging Face Hub，解决 `whisper` 命令行运行时因网络原因下载模型失败的问题。
 
-## 下载模型
+模型托管于：[https://huggingface.co/TheScenery/whisper-models](https://huggingface.co/TheScenery/whisper-models)
 
-从 [Releases](https://github.com/你的用户名/whisper-models/releases/tag/latest) 页面下载所需的 `.pt` 文件，
-放入 Whisper 缓存目录:
+## 使用方法
 
-### 小模型（< 2GB）
-
-可直接下载:
+### 安装依赖
 
 ```bash
-# macOS / Linux
-curl -L -o ~/.cache/whisper/tiny.pt \
-  https://github.com/你的用户名/whisper-models/releases/download/latest/tiny.pt
+pip install -U huggingface_hub
+```
 
-# 批量下载小模型
+### 下载模型
+
+```bash
+# 下载单个模型到 whisper 缓存目录
+huggingface-cli download TheScenery/whisper-models tiny.pt \
+  --local-dir ~/.cache/whisper/
+
+# 批量下载所有小模型
 for model in tiny.en tiny base.en base small.en small medium.en medium; do
-  curl -L -o ~/.cache/whisper/${model}.pt \
-    https://github.com/你的用户名/whisper-models/releases/download/latest/${model}.pt
+  huggingface-cli download TheScenery/whisper-models ${model}.pt \
+    --local-dir ~/.cache/whisper/
+done
+
+# 批量下载大模型（无 2GB 限制）
+for model in large-v1 large-v2 large-v3 large-v3-turbo; do
+  huggingface-cli download TheScenery/whisper-models ${model}.pt \
+    --local-dir ~/.cache/whisper/
 done
 ```
 
-### 大模型（>= 2GB）
-
-因 GitHub Releases 单文件限制 2GB，large 系列模型已分割上传，使用 `scripts/join.sh` 自动下载、重组并校验:
+### 国内用户（镜像加速）
 
 ```bash
-bash scripts/join.sh large-v3
+HF_ENDPOINT=https://hf-mirror.com huggingface-cli download \
+  TheScenery/whisper-models tiny.pt --local-dir ~/.cache/whisper/
 ```
 
-## 使用
+### 使用 whisper
 
-模型文件放入 `~/.cache/whisper/` 后，whisper 会自动使用本地缓存，无需再从 OpenAI 下载:
+模型文件放入 `~/.cache/whisper/` 后，whisper 会自动使用本地缓存:
 
 ```bash
 whisper audio.mp3 --model tiny
 ```
-
-## 手动触发更新
-
-在 GitHub 仓库页面点击 **Actions** → **Download Whisper Models** → **Run workflow** 即可重新下载最新模型。
 
 ## 可用模型
 
@@ -59,3 +63,15 @@ whisper audio.mp3 --model tiny
 | large-v2 | ~2.9 GB | 多语言 |
 | large-v3 | ~2.9 GB | 多语言 |
 | large-v3-turbo | ~2.9 GB | 多语言 |
+
+## 配置
+
+### GitHub Secrets
+
+| Secret | 说明 |
+|--------|------|
+| `HF_TOKEN` | Hugging Face 访问令牌，需有写入权限 |
+
+在 Actions 中手动触发 **Upload Whisper Models to Hugging Face** 即可自动下载并上传。
+
+> 旧方案（GitHub Releases + split）已废弃，详见 git history。
