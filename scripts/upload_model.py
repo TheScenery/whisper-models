@@ -42,7 +42,7 @@ def main():
 
     api = HfApi(token=token)
 
-    if api.file_exists(repo_id=repo_id, path_in_repo=filename, repo_type="model"):
+    if api.file_exists(repo_id=repo_id, filename=filename, repo_type="model"):
         print(f"[{model_name}] Already exists on HF Hub, skipping")
         return
 
